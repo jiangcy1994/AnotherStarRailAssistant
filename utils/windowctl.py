@@ -52,32 +52,42 @@ class WindowsCtl:
         self._window_name = name
         self._hwnd = 0
 
-    def get_focus(self) -> int:
-        return win32api.SendMessage(self.hwnd, win32con.WM_SETFOCUS, 0, 0)
+    def set_foreground(self) -> None:
+        win32gui.SetForegroundWindow(self.hwnd)
 
     def mouse_click(self, x: int, y: int, delay: float, button: str = 'L') -> None:
-        point = win32api.MAKELONG(x, y)
+        self.set_cursor_pos(x, y)
         if button == 'L':
-            win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONDOWN, 0, point)
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
             sleep(delay)
-            win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, point)
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
         elif button == 'R':
-            win32api.SendMessage(self.hwnd, win32con.WM_RBUTTONDOWN, 0, point)
+            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
             sleep(delay)
-            win32api.SendMessage(self.hwnd, win32con.WM_RBUTTONUP, 0, point)
+            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
 
-    def keyboard_click(self, key: str, delay: int) -> None:
-        key = key.upper()
-        key_num = int(key_num_map(key))
-        num = win32api.MapVirtualKey(key_num, 0)
-        dparam = 1 | (num << 16)
-        uparam = 1 | (num << 16) | (1 << 30) | (1 << 31)
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, 0, dparam)
+    @staticmethod
+    def set_cursor_pos(x: int, y: int) -> None:
+        win32api.SetCursorPos([x, y])
+
+    @staticmethod
+    def get_cursor_pos() -> (int, int):
+        return win32api.GetCursorPos()
+
+    @staticmethod
+    def mouse_move(dx: int, dy: int, delay: float) -> None:
+        win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, dx, dy)
         sleep(delay)
-        win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, uparam)
+
+    @staticmethod
+    def keyboard_click(key: str, delay: int) -> None:
+        key_num = _key_num_map(key)
+        win32api.keybd_event(key_num, 0, 0, 0)
+        sleep(delay)
+        win32api.keybd_event(key_num, win32con.KEYEVENTF_KEYUP, 0, 0)
 
 
-def key_num_map(key: str) -> int:
+def _key_num_map(key: str) -> int:
     if len(key) < 0:
         return 0
     if len(key) == 1:
