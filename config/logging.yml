@@ -1,5 +1,7 @@
 version: 1
 
+disable_existing_loggers: true
+
 formatters:
   default_fmter:
     format: '%(asctime)-8s - %(filename)s - %(funcName)s - %(lineno)d - %(levelname)s - %(message)s'
