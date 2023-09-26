@@ -1,5 +1,7 @@
 import argparse
 
+from utils.logs import init_logger
+
 parser = argparse.ArgumentParser(
     prog='python main.py',
     description='Another hsr assistant with similar function')
@@ -13,4 +15,5 @@ parser.add_argument('--end_action', metavar='ACTION',
 args = parser.parse_args()
 
 if __name__ == "__main__":
+    init_logger()
     pass
