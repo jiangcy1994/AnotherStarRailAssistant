@@ -2,6 +2,7 @@ import ctypes
 from functools import partial
 from time import sleep
 
+import numpy as np
 import win32api
 import win32con
 import win32gui
@@ -14,9 +15,9 @@ __all__ = ['WindowCtl']
 
 class WindowCtl:
     _hwnd: int
+    _class_name: str | int
     _window_name: str | int
     _window_rect: list[int]
-    _class_name: str | int
 
     def __init__(self, class_name: str | int = 0, window_name: str | int = 0):
         user32 = ctypes.windll.user32
@@ -42,28 +43,15 @@ class WindowCtl:
                                                                                                     self.window_name)
                 logger.error(error_str)
                 raise ValueError(error_str)
-            self._window_rect = [0, 0, 0, 0]
         return self._hwnd
 
     @property
     def class_name(self) -> str:
         return self._class_name
 
-    @class_name.setter
-    def class_name(self, name: str) -> None:
-        self._class_name = name
-        logger.debug('Set class_name: {0}'.format(name))
-        self._hwnd = 0
-
     @property
     def window_name(self) -> str:
         return self._window_name
-
-    @window_name.setter
-    def window_name(self, name: str) -> None:
-        self._window_name = name
-        logger.debug('Set window_name: {0}'.format(name))
-        self._hwnd = 0
 
     @property
     def window_rect(self) -> list[int]:
@@ -79,12 +67,25 @@ class WindowCtl:
     def window_height(self) -> int:
         return self.window_rect[3] - self.window_rect[1]
 
+    @property
+    def screenshot(self) -> np.ndarray:
+        hwnd_dc = win32gui.GetWindowDC(self.hwnd)
+        src_dc = win32ui.CreateDCFromHandle(hwnd_dc)
+        mem_dc = src_dc.CreateCompatibleDC()
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(src_dc, self.window_width, self.window_height)
+        mem_dc.SelectObject(bmp)
+        mem_dc.BitBlt((0, 0), (self.window_width, self.window_height), src_dc, (0, 0), win32con.SRCCOPY)
+        img_np = np.fromstring(bmp.GetBitmapBits(True), dtype='uint8')
+        img_np.shape = (self.window_height, self.window_width, 4)
+        return img_np
+
     @staticmethod
     def mouse_lclick_at(x: int, y: int, delay: float) -> None:
-        win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, x, y)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
+        win32api.SetCursorPos((x, y))
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
         sleep(delay)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
         logger.debug('Mouse LClick at ({0}, {1} with delay {2} s)'.format(x, y, delay))
 
     @staticmethod
@@ -94,28 +95,22 @@ class WindowCtl:
 
     @staticmethod
     def keyboard_click(key: str, delay: float) -> None:
-        key_num = _key_num_map(key)
-        win32api.keybd_event(key_num, 0, 0, 0)
+        vk_num = WindowCtl.vk_num_map(key)
+        win32api.keybd_event(vk_num, 0, 0, 0)
         sleep(delay)
-        win32api.keybd_event(key_num, win32con.KEYEVENTF_KEYUP, 0, 0)
+        win32api.keybd_event(vk_num, win32con.KEYEVENTF_KEYUP, 0, 0)
 
-    def take_screenshot(self):
-        hwndDC = win32gui.GetWindowDC(self.hwnd)
-        srcdc = win32ui.CreateDCFromHandle(hwndDC)
-        memdc = srcdc.CreateCompatibleDC()
-        bmp = win32ui.CreateBitmap()
-        bmp.CreateCompatibleBitmap(srcdc, self.window_width, self.window_height)
-        memdc.SelectObject(bmp)
-        memdc.BitBlt((0, 0), (self.window_width, self.window_height), srcdc, (0, 0), win32con.SRCCOPY)
-        bmp.SaveBitmapFile(memdc, 'screenshot.bmp')
-
-def _key_num_map(key: str) -> int:
-    if len(key) < 0:
-        return 0
-    if len(key) == 1:
-        return ord(key.upper())
-    if key.upper() == 'TAB':
-        return ord('\t')
-    if key.upper().startswith('F'):
-        return 111 + int(key[1:])
-    return 0
+    @staticmethod
+    def vk_num_map(key: str) -> int:
+        if len(key) == 0:
+            error_str: str = 'Can Not key_num with no key'
+            logger.error(error_str)
+            raise ValueError(error_str)
+        if len(key) == 1:
+            return ord(key.upper())
+        result = win32con.__dict__.get('VK_' + key)
+        if result is None:
+            error_str: str = 'Can Not key_num with Key: {0}'.format(key)
+            logger.error(error_str)
+            raise ValueError(error_str)
+        return result
