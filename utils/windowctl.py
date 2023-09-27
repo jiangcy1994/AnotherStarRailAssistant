@@ -89,9 +89,8 @@ class WindowCtl:
         logger.debug('Mouse LClick at ({0}, {1} with delay {2} s)'.format(x, y, delay))
 
     @staticmethod
-    def mouse_move(dx: int, dy: int, delay: float) -> None:
+    def mouse_move(dx: int = 0, dy: int = 0) -> None:
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, dx, dy)
-        sleep(delay)
 
     @staticmethod
     def keyboard_click(key: str, delay: float) -> None:
