@@ -1,21 +1,27 @@
+import ctypes
 from functools import partial
 from time import sleep
 
 import win32api
 import win32con
 import win32gui
+import win32ui
 
 from utils.logs import logger
 
-__all__ = ['WindowsCtl']
+__all__ = ['WindowCtl']
 
 
-class WindowsCtl:
+class WindowCtl:
     _hwnd: int
     _window_name: str | int
+    _window_rect: list[int]
     _class_name: str | int
 
-    def __int__(self, class_name: str | int, window_name: str | int):
+    def __init__(self, class_name: str | int = 0, window_name: str | int = 0):
+        user32 = ctypes.windll.user32
+        user32.SetProcessDPIAware()
+
         if class_name == 0 and window_name == 0:
             error_str: str = 'Can Not Set Both class_name and window_name 0'
             logger.error(error_str)
@@ -23,6 +29,7 @@ class WindowsCtl:
         self._hwnd = 0
         self._class_name = class_name
         self._window_name = window_name
+        self._window_rect = [0, 0, 0, 0]
 
         self.set_foreground = partial(win32gui.SetForegroundWindow, self.hwnd)
 
@@ -35,6 +42,7 @@ class WindowsCtl:
                                                                                                     self.window_name)
                 logger.error(error_str)
                 raise ValueError(error_str)
+            self._window_rect = [0, 0, 0, 0]
         return self._hwnd
 
     @property
@@ -57,6 +65,20 @@ class WindowsCtl:
         logger.debug('Set window_name: {0}'.format(name))
         self._hwnd = 0
 
+    @property
+    def window_rect(self) -> list[int]:
+        if self._window_rect == [0, 0, 0, 0]:
+            self._window_rect = win32gui.GetWindowRect(self.hwnd)
+        return self._window_rect
+
+    @property
+    def window_width(self) -> int:
+        return self.window_rect[2] - self.window_rect[0]
+
+    @property
+    def window_height(self) -> int:
+        return self.window_rect[3] - self.window_rect[1]
+
     @staticmethod
     def mouse_lclick_at(x: int, y: int, delay: float) -> None:
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, x, y)
@@ -77,6 +99,15 @@ class WindowsCtl:
         sleep(delay)
         win32api.keybd_event(key_num, win32con.KEYEVENTF_KEYUP, 0, 0)
 
+    def take_screenshot(self):
+        hwndDC = win32gui.GetWindowDC(self.hwnd)
+        srcdc = win32ui.CreateDCFromHandle(hwndDC)
+        memdc = srcdc.CreateCompatibleDC()
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(srcdc, self.window_width, self.window_height)
+        memdc.SelectObject(bmp)
+        memdc.BitBlt((0, 0), (self.window_width, self.window_height), srcdc, (0, 0), win32con.SRCCOPY)
+        bmp.SaveBitmapFile(memdc, 'screenshot.bmp')
 
 def _key_num_map(key: str) -> int:
     if len(key) < 0:
