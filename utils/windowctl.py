@@ -24,7 +24,7 @@ class WindowCtl:
         user32.SetProcessDPIAware()
 
         if class_name == 0 and window_name == 0:
-            error_str: str = 'Can Not Set Both class_name and window_name 0'
+            error_str: str = 'can not set both class_name and window_name 0'
             logger.error(error_str)
             raise ValueError(error_str)
         self._hwnd = 0
@@ -39,7 +39,7 @@ class WindowCtl:
         if self._hwnd == 0:
             self._hwnd = win32gui.FindWindow(self.class_name, self.window_name)
             if self._hwnd == 0:
-                error_str: str = 'Can Not FindWindow with class_name: {0}, window_name: {1}'.format(self.class_name,
+                error_str: str = 'can not FindWindow with class_name: {0}, window_name: {1}'.format(self.class_name,
                                                                                                     self.window_name)
                 logger.error(error_str)
                 raise ValueError(error_str)
@@ -81,12 +81,17 @@ class WindowCtl:
         return img_np
 
     @staticmethod
-    def mouse_lclick_at(x: int, y: int, delay: float) -> None:
+    def mouse_click(x: int, y: int, delay: float, button: str = 'LEFT') -> None:
         win32api.SetCursorPos((x, y))
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+        button_list = ['LEFT', 'MIDDLE', 'RIGHT']
+        if button not in button_list:
+            error_str: str = 'can not accept button {0}, select in {1}'.format(button, button_list)
+            logger.error(error_str)
+            raise ValueError(error_str)
+        win32api.mouse_event(win32con.__dict__.get('MOUSEEVENTF_' + button + 'DOWN'), 0, 0)
         sleep(delay)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
-        logger.debug('Mouse LClick at ({0}, {1} with delay {2} s)'.format(x, y, delay))
+        win32api.mouse_event(win32con.__dict__.get('MOUSEEVENTF_' + button + 'UP'), 0, 0)
+        logger.debug('mouse {0} button click at ({1}, {2}) with delay {3} s)'.format(button, x, y, delay))
 
     @staticmethod
     def mouse_move(dx: int = 0, dy: int = 0) -> None:
@@ -102,14 +107,14 @@ class WindowCtl:
     @staticmethod
     def vk_num_map(key: str) -> int:
         if len(key) == 0:
-            error_str: str = 'Can Not key_num with no key'
+            error_str: str = 'can not key_num with no key'
             logger.error(error_str)
             raise ValueError(error_str)
         if len(key) == 1:
             return ord(key.upper())
         result = win32con.__dict__.get('VK_' + key)
         if result is None:
-            error_str: str = 'Can Not key_num with Key: {0}'.format(key)
+            error_str: str = 'can not key_num with Key: {0}'.format(key)
             logger.error(error_str)
             raise ValueError(error_str)
         return result
