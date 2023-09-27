@@ -1,3 +1,4 @@
+from functools import partial
 from time import sleep
 
 import win32api
@@ -23,6 +24,8 @@ class WindowsCtl:
         self._class_name = class_name
         self._window_name = window_name
 
+        self.set_foreground = partial(win32gui.SetForegroundWindow, self.hwnd)
+
     @property
     def hwnd(self) -> int:
         if self._hwnd == 0:
@@ -41,6 +44,7 @@ class WindowsCtl:
     @class_name.setter
     def class_name(self, name: str) -> None:
         self._class_name = name
+        logger.debug('Set class_name: {0}'.format(name))
         self._hwnd = 0
 
     @property
@@ -50,29 +54,16 @@ class WindowsCtl:
     @window_name.setter
     def window_name(self, name: str) -> None:
         self._window_name = name
+        logger.debug('Set window_name: {0}'.format(name))
         self._hwnd = 0
 
-    def set_foreground(self) -> None:
-        win32gui.SetForegroundWindow(self.hwnd)
-
-    def mouse_click(self, x: int, y: int, delay: float, button: str = 'L') -> None:
-        self.set_cursor_pos(x, y)
-        if button == 'L':
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-            sleep(delay)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        elif button == 'R':
-            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
-            sleep(delay)
-            win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
-
     @staticmethod
-    def set_cursor_pos(x: int, y: int) -> None:
-        win32api.SetCursorPos([x, y])
-
-    @staticmethod
-    def get_cursor_pos() -> (int, int):
-        return win32api.GetCursorPos()
+    def mouse_lclick_at(x: int, y: int, delay: float) -> None:
+        win32api.mouse_event(win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, x, y)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN)
+        sleep(delay)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP)
+        logger.debug('Mouse LClick at ({0}, {1} with delay {2} s)'.format(x, y, delay))
 
     @staticmethod
     def mouse_move(dx: int, dy: int, delay: float) -> None:
@@ -80,7 +71,7 @@ class WindowsCtl:
         sleep(delay)
 
     @staticmethod
-    def keyboard_click(key: str, delay: int) -> None:
+    def keyboard_click(key: str, delay: float) -> None:
         key_num = _key_num_map(key)
         win32api.keybd_event(key_num, 0, 0, 0)
         sleep(delay)
