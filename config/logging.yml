@@ -20,6 +20,7 @@ handlers:
     filename: logs/日志文件.log
     when: midnight
     backupCount: 10
+    encoding: utf8
 
   info_file_handler:
     class: logging.handlers.TimedRotatingFileHandler
@@ -28,6 +29,7 @@ handlers:
     filename: logs/战斗日志.log
     when: midnight
     backupCount: 10
+    encoding: utf8
 
 loggers:
   asra:
