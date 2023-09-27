@@ -78,6 +78,7 @@ class WindowCtl:
         mem_dc.BitBlt((0, 0), (self.window_width, self.window_height), src_dc, (0, 0), win32con.SRCCOPY)
         img_np = np.fromstring(bmp.GetBitmapBits(True), dtype='uint8')
         img_np.shape = (self.window_height, self.window_width, 4)
+        logger.debug('image taken with size ({0}, {1})'.format(self.window_width, self.window_height))
         return img_np
 
     @staticmethod
@@ -91,18 +92,20 @@ class WindowCtl:
         win32api.mouse_event(win32con.__dict__.get('MOUSEEVENTF_' + button + 'DOWN'), 0, 0)
         sleep(delay)
         win32api.mouse_event(win32con.__dict__.get('MOUSEEVENTF_' + button + 'UP'), 0, 0)
-        logger.debug('mouse {0} button click at ({1}, {2}) with delay {3} s)'.format(button, x, y, delay))
+        logger.debug('mouse {0} button click at ({1}, {2}) with delay {3} s'.format(button, x, y, delay))
 
     @staticmethod
     def mouse_move(dx: int = 0, dy: int = 0) -> None:
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, dx, dy)
+        logger.debug('mouse move with (dx, dy): ({0}, {1})'.format(dx, dy))
 
     @staticmethod
-    def keyboard_click(key: str, delay: float) -> None:
+    def keyboard_press(key: str, delay: float) -> None:
         vk_num = WindowCtl.vk_num_map(key)
         win32api.keybd_event(vk_num, 0, 0, 0)
         sleep(delay)
         win32api.keybd_event(vk_num, win32con.KEYEVENTF_KEYUP, 0, 0)
+        logger.debug('keyboard {0} key press with delay {1} s'.format(key, delay))
 
     @staticmethod
     def vk_num_map(key: str) -> int:
