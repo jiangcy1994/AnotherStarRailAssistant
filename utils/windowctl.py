@@ -1,4 +1,3 @@
-import ctypes
 from functools import partial
 from time import sleep
 
@@ -20,9 +19,6 @@ class WindowCtl:
     _window_rect: list[int]
 
     def __init__(self, class_name: str | int = 0, window_name: str | int = 0):
-        user32 = ctypes.windll.user32
-        user32.SetProcessDPIAware()
-
         if class_name == 0 and window_name == 0:
             error_str: str = 'can not set both class_name and window_name 0'
             logger.error(error_str)
