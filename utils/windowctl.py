@@ -96,6 +96,11 @@ class WindowCtl:
         logger.debug('mouse move with (dx, dy): ({0}, {1})'.format(dx, dy))
 
     @staticmethod
+    def mouse_wheel_rotate(move: int = 0) -> None:
+        win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, move * win32con.WHEEL_DELTA)
+        logger.debug('mouse wheel rotate {0} times'.format(move))
+
+    @staticmethod
     def keyboard_press(key: str, delay: float) -> None:
         vk_num = WindowCtl.vk_num_map(key)
         win32api.keybd_event(vk_num, 0, 0, 0)
