@@ -104,6 +104,10 @@ class WindowCtl:
         logger.debug('keyboard {0} key press with delay {1} s'.format(key, delay))
 
     @staticmethod
+    def async_key_state(key: str) -> bool:
+        return win32api.GetAsyncKeyState(WindowCtl.vk_num_map(key)) != 0
+
+    @staticmethod
     def vk_num_map(key: str) -> int:
         if len(key) == 0:
             error_str: str = 'can not key_num with no key'
