@@ -161,3 +161,11 @@ cython_debug/
 
 # Logs
 logs/*.log
+
+# maps
+maps/*.json
+maps/*.yml
+
+# imgs
+imgs/*.jpg
+imgs/*.png
